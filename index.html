@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Калькулятор</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .calculator {
+      background: #1e1e2e;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+      width: 320px;
+    }
+
+    .display {
+      background: #12121f;
+      border-radius: 16px;
+      padding: 20px 20px 12px;
+      margin-bottom: 20px;
+      text-align: right;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .display .expression {
+      color: #666;
+      font-size: 14px;
+      min-height: 20px;
+      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .display .result {
+      color: #fff;
+      font-size: 36px;
+      font-weight: 300;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: 500;
+      height: 64px;
+      cursor: pointer;
+      transition: transform 0.08s, opacity 0.08s;
+      outline: none;
+    }
+
+    button:active {
+      transform: scale(0.93);
+      opacity: 0.85;
+    }
+
+    .btn-number {
+      background: #2a2a3e;
+      color: #fff;
+    }
+
+    .btn-operator {
+      background: #e94560;
+      color: #fff;
+    }
+
+    .btn-action {
+      background: #3a3a50;
+      color: #ccc;
+    }
+
+    .btn-equals {
+      background: linear-gradient(135deg, #e94560, #c0392b);
+      color: #fff;
+    }
+
+    .btn-zero {
+      grid-column: span 2;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="buttons">
+      <button class="btn-action" onclick="clearAll()">AC</button>
+      <button class="btn-action" onclick="toggleSign()">+/-</button>
+      <button class="btn-action" onclick="percent()">%</button>
+      <button class="btn-operator" onclick="setOperator('/')">÷</button>
+
+      <button class="btn-number" onclick="inputDigit('7')">7</button>
+      <button class="btn-number" onclick="inputDigit('8')">8</button>
+      <button class="btn-number" onclick="inputDigit('9')">9</button>
+      <button class="btn-operator" onclick="setOperator('*')">×</button>
+
+      <button class="btn-number" onclick="inputDigit('4')">4</button>
+      <button class="btn-number" onclick="inputDigit('5')">5</button>
+      <button class="btn-number" onclick="inputDigit('6')">6</button>
+      <button class="btn-operator" onclick="setOperator('-')">−</button>
+
+      <button class="btn-number" onclick="inputDigit('1')">1</button>
+      <button class="btn-number" onclick="inputDigit('2')">2</button>
+      <button class="btn-number" onclick="inputDigit('3')">3</button>
+      <button class="btn-operator" onclick="setOperator('+')">+</button>
+
+      <button class="btn-number btn-zero" onclick="inputDigit('0')">0</button>
+      <button class="btn-number" onclick="inputDot()">.</button>
+      <button class="btn-equals" onclick="calculate()">=</button>
+    </div>
+  </div>
+
+  <script>
+    let current = '0';
+    let previous = null;
+    let operator = null;
+    let shouldReset = false;
+
+    const resultEl = document.getElementById('result');
+    const expressionEl = document.getElementById('expression');
+
+    function updateDisplay() {
+      resultEl.textContent = current;
+    }
+
+    function inputDigit(digit) {
+      if (shouldReset) {
+        current = digit;
+        shouldReset = false;
+      } else {
+        current = current === '0' ? digit : current + digit;
+      }
+      updateDisplay();
+    }
+
+    function inputDot() {
+      if (shouldReset) {
+        current = '0.';
+        shouldReset = false;
+        updateDisplay();
+        return;
+      }
+      if (!current.includes('.')) {
+        current += '.';
+        updateDisplay();
+      }
+    }
+
+    function setOperator(op) {
+      if (operator && !shouldReset) calculate(true);
+      previous = current;
+      operator = op;
+      shouldReset = true;
+      const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+      expressionEl.textContent = previous + ' ' + symbols[op];
+    }
+
+    function calculate(chain = false) {
+      if (!operator || previous === null) return;
+      const a = parseFloat(previous);
+      const b = parseFloat(current);
+      let res;
+      switch (operator) {
+        case '+': res = a + b; break;
+        case '-': res = a - b; break;
+        case '*': res = a * b; break;
+        case '/':
+          if (b === 0) {
+            current = 'Ошибка';
+            operator = null;
+            previous = null;
+            expressionEl.textContent = '';
+            updateDisplay();
+            return;
+          }
+          res = a / b; break;
+      }
+      const symbols = { '+': '+', '-': '−', '*': '×', '/': '÷' };
+      if (!chain) {
+        expressionEl.textContent = previous + ' ' + symbols[operator] + ' ' + current + ' =';
+        operator = null;
+        previous = null;
+      }
+      current = parseFloat(res.toFixed(10)).toString();
+      shouldReset = true;
+      updateDisplay();
+    }
+
+    function clearAll() {
+      current = '0';
+      previous = null;
+      operator = null;
+      shouldReset = false;
+      expressionEl.textContent = '';
+      updateDisplay();
+    }
+
+    function toggleSign() {
+      if (current !== '0' && current !== 'Ошибка') {
+        current = current.startsWith('-') ? current.slice(1) : '-' + current;
+        updateDisplay();
+      }
+    }
+
+    function percent() {
+      current = (parseFloat(current) / 100).toString();
+      updateDisplay();
+    }
+  </script>
+</body>
+</html>
